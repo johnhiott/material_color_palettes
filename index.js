@@ -7,33 +7,26 @@ var stream = fs.createWriteStream("colors.md");
 var url = 'https://www.google.com/design/spec/style/color.html#color-color-palette';
 
 request(url, function(error, response, html){
+  if(!error){
+    var $ = cheerio.load(html);
 
-    // First we'll check to make sure no errors occurred when making the request
+    $(".color-group").each(function( index ) {
+      var prefix =  $(this).find(".name").text().replace(' ', '_' ).toLowerCase();
+      if (prefix === "") return false;
 
-    if(!error){
-        // Next, we'll utilize the cheerio library on the returned html which will essentially give us jQuery functionality
+      var title = '### ' + prefix + '\n\n';
+      stream.write(title);
 
-        var $ = cheerio.load(html);
+      stream.write('```\n\n');
 
-        $(".color-group").each(function( index ) {
-          var prefix =  $(this).find(".name").text().replace(' ', '_' ).toLowerCase();
-
-          if (prefix === "") return false;
-
-          var title = '### ' + prefix + '\n\n';
-          stream.write(title);
-
-          stream.write('```\n\n');
-
-          $(this).find(".color").each(function () {
-            var colorTitle = $(this).find(".shade").text().toLowerCase();;
-            var colorHex = $(this).find(".hex").text();
-            if (!$(this).hasClass("main-color")) {
-              stream.write('<color name="' + prefix + "_" + colorTitle + '">' + colorHex + '</color>\n');
-            }
-          });
-          stream.write('```\n\n');
-        });
-
-    }
+      $(this).find(".color").each(function () {
+        var colorTitle = $(this).find(".shade").text().toLowerCase();;
+        var colorHex = $(this).find(".hex").text();
+        if (!$(this).hasClass("main-color")) {
+          stream.write('<color name="' + prefix + "_" + colorTitle + '">' + colorHex + '</color>\n');
+        }
+      });
+      stream.write('```\n\n');
+    });
+  }
 });
